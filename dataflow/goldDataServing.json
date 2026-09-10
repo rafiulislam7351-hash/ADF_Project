@@ -1,0 +1,311 @@
+{
+	"name": "goldDataServing",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "silverdimAirline"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "silverFactBookings"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "silverFactBooking"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "silverDimFlight"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "DataServingAirline"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "goldDimFlight"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "dataServingFlight"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "goldDimAirline"
+				}
+			],
+			"transformations": [
+				{
+					"name": "joinAirline"
+				},
+				{
+					"name": "selectCols"
+				},
+				{
+					"name": "sumAirlinename"
+				},
+				{
+					"name": "castTicketCost"
+				},
+				{
+					"name": "Ranking"
+				},
+				{
+					"name": "filterTop5"
+				},
+				{
+					"name": "joinDimFlight"
+				},
+				{
+					"name": "selectColsF"
+				},
+				{
+					"name": "castTicketCostInt"
+				},
+				{
+					"name": "sumFlightRevenue"
+				},
+				{
+					"name": "RankingFlight"
+				},
+				{
+					"name": "filterTop5Flight"
+				},
+				{
+					"name": "alterRow11"
+				},
+				{
+					"name": "alterRow12"
+				},
+				{
+					"name": "handlingNull"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          airline_id as short,",
+				"          airline_name as string,",
+				"          country as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'silver',",
+				"     folderPath: 'dimAirline') ~> silverdimAirline",
+				"source(output(",
+				"          booking_id as integer,",
+				"          passenger_id as integer,",
+				"          flight_id as integer,",
+				"          airline_id as integer,",
+				"          origin_airport_id as integer,",
+				"          destination_airport_id as integer,",
+				"          booking_date as date,",
+				"          ticket_cost as string,",
+				"          flight_duration_mins as integer,",
+				"          checkin_status as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'silver',",
+				"     folderPath: 'factBooking') ~> silverFactBookings",
+				"source(output(",
+				"          booking_id as integer,",
+				"          passenger_id as integer,",
+				"          flight_id as integer,",
+				"          airline_id as integer,",
+				"          origin_airport_id as integer,",
+				"          destination_airport_id as integer,",
+				"          booking_date as date,",
+				"          ticket_cost as string,",
+				"          flight_duration_mins as integer,",
+				"          checkin_status as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'silver',",
+				"     folderPath: 'factBooking') ~> silverFactBooking",
+				"source(output(",
+				"          flight_id as short,",
+				"          flight_number as string,",
+				"          departure_time as string,",
+				"          arrival_time as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'silver',",
+				"     folderPath: 'dimFlight') ~> silverDimFlight",
+				"silverFactBookings, silverdimAirline join(silverFactBookings@airline_id == silverdimAirline@airline_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinAirline",
+				"joinAirline select(mapColumn(",
+				"          booking_id,",
+				"          passenger_id,",
+				"          flight_id,",
+				"          airline_id = silverFactBookings@airline_id,",
+				"          origin_airport_id,",
+				"          destination_airport_id,",
+				"          booking_date,",
+				"          ticket_cost,",
+				"          flight_duration_mins,",
+				"          checkin_status,",
+				"          airline_name,",
+				"          country",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectCols",
+				"castTicketCost aggregate(groupBy(airline_name),",
+				"     Total_Cost = sum(ticket_cost)) ~> sumAirlinename",
+				"selectCols cast(output(",
+				"          ticket_cost as integer",
+				"     ),",
+				"     errors: true) ~> castTicketCost",
+				"sumAirlinename window(desc(Total_Cost, true),",
+				"     Ranking = denseRank()) ~> Ranking",
+				"Ranking filter(Ranking<=5) ~> filterTop5",
+				"silverFactBooking, silverDimFlight join(silverFactBooking@flight_id == silverDimFlight@flight_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinDimFlight",
+				"joinDimFlight select(mapColumn(",
+				"          flight_id = silverFactBooking@flight_id,",
+				"          booking_date,",
+				"          ticket_cost,",
+				"          flight_duration_mins,",
+				"          checkin_status,",
+				"          flight_number,",
+				"          departure_time,",
+				"          arrival_time",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectColsF",
+				"handlingNull cast(output(",
+				"          ticket_cost as integer",
+				"     ),",
+				"     errors: true) ~> castTicketCostInt",
+				"castTicketCostInt aggregate(groupBy(flight_number),",
+				"     Total_Revenue = sum(ticket_cost)) ~> sumFlightRevenue",
+				"sumFlightRevenue window(desc(Total_Revenue, true),",
+				"     Ranking = denseRank()) ~> RankingFlight",
+				"RankingFlight filter(Total_Revenue<=5) ~> filterTop5Flight",
+				"filterTop5 alterRow(insertIf(1==1)) ~> alterRow11",
+				"filterTop5Flight alterRow(insertIf(1==1)) ~> alterRow12",
+				"selectColsF derive(flight_number = iifNull(flight_number, 'Unknown')) ~> handlingNull",
+				"alterRow11 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'gold',",
+				"     folderPath: 'BusinessViewAirline',",
+				"     overwrite: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> DataServingAirline",
+				"silverDimFlight sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'gold',",
+				"     folderPath: 'dimFlight',",
+				"     overwrite: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> goldDimFlight",
+				"alterRow12 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'gold',",
+				"     folderPath: 'BusinessViewFlight',",
+				"     overwrite: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> dataServingFlight",
+				"silverdimAirline sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'gold',",
+				"     folderPath: 'dimAirline',",
+				"     overwrite: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> goldDimAirline"
+			]
+		}
+	}
+}

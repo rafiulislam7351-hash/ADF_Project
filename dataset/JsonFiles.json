@@ -1,0 +1,19 @@
+{
+	"name": "JsonFiles",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "GitToAzure",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": "rafiulislam7351-hash/ADF_Project/refs/heads/main/SourceFiles/JSON/DimAirport.json"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

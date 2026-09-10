@@ -1,0 +1,7 @@
+{
+	"name": "rafiu",
+	"properties": {
+		"type": "SelfHosted",
+		"description": "Creating Integration runtime for on-prem data migration"
+	}
+}

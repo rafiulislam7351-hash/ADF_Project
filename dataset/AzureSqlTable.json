@@ -1,0 +1,67 @@
+{
+	"name": "AzureSqlTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "booking_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "passenger_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "flight_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "airline_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "origin_airport_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "destination_airport_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "booking_date",
+				"type": "date"
+			},
+			{
+				"name": "ticket_cost",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "flight_duration_mins",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "checkin_status",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "FactBookings"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

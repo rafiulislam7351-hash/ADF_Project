@@ -1,0 +1,122 @@
+{
+	"name": "ProductionPipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "ExecuteADLS",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PipelineIngestionFromAdf",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"file_name": {
+							"value": "@pipeline().parameters.file_name",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "ExecuteAPI",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ExecuteADLS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "APIIngestionFromGit",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "ExecuteIncrementalLoading",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ExecuteAPI",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "AzureSqlToADLS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Alertreqest",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "ExecuteIncrementalLoading",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://adfprojectlogicapp-gud6ebehchbqayh4.westus3-01.azurewebsites.net:443/api/alert/triggers/When_an_HTTP_request_is_received/invoke?api-version=2022-05-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=DD3uB_iD7jeZiTCDDkv0MgSgHZUIZmgxwn9nQvDPULk",
+					"body": {
+						"value": "{\n    \"pipeline_name\": \"@{pipeline().Pipeline}\",\n    \"run_id\": \"@{pipeline().RunId}\",\n    \"status\": \"@{activity('ExecuteIncrementalLoading').status}\",\n    \"error\": \"@{if(equals(activity('ExecuteIncrementalLoading').status, 'Failed'), string(activity('ExecuteIncrementalLoading').error), 'No error')}\"\n}",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"file_name": {
+				"type": "array",
+				"defaultValue": [
+					{
+						"file_name": "DimPassenger.csv"
+					},
+					{
+						"file_name": "DimAirline.csv"
+					},
+					{
+						"file_name": "DimFlight.csv"
+					}
+				]
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-09-09T09:18:30Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
