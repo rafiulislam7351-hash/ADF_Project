@@ -79,6 +79,18 @@
 						"dependencyConditions": [
 							"Failed"
 						]
+					},
+					{
+						"activity": "ExecuteSilver",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "ExecuteGold",
+						"dependencyConditions": [
+							"Failed"
+						]
 					}
 				],
 				"policy": {
@@ -96,6 +108,52 @@
 						"value": "{\n    \"pipeline_name\": \"@{pipeline().Pipeline}\",\n    \"run_id\": \"@{pipeline().RunId}\",\n    \"status\": \"@{activity('ExecuteIncrementalLoading').status}\",\n    \"error\": \"@{if(equals(activity('ExecuteIncrementalLoading').status, 'Failed'), string(activity('ExecuteIncrementalLoading').error), 'No error')}\"\n}",
 						"type": "Expression"
 					}
+				}
+			},
+			{
+				"name": "ExecuteSilver",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ExecuteIncrementalLoading",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "silverTransformation",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "ExecuteGold",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ExecuteSilver",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "goldDataServing",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
 				}
 			}
 		],
