@@ -1,0 +1,49 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-projectNew"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"AzureSqlDatabase1_password": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://adfaltenatestorage.dfs.core.windows.net/"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_server": {
+			"value": "azuresqldatabaseserverkk.database.windows.net"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_database": {
+			"value": "asdsql"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_userName": {
+			"value": "azuresqldb"
+		},
+		"GitToAzure_properties_typeProperties_url": {
+			"value": "https://raw.githubusercontent.com/"
+		},
+		"triggerTriggerProdPipeline_properties_ProductionPipeline_parameters_file_name": {
+			"value": [
+				{
+					"file_name": "DimPassenger.csv"
+				},
+				{
+					"file_name": "DimAirline.csv"
+				},
+				{
+					"file_name": "DimFlight.csv"
+				}
+			]
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
